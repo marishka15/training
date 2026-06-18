@@ -1,81 +1,50 @@
-import { useEffect, useState } from 'react';
+import type { FormData } from './TrainingList';
 
-import type { Training } from './TrainingList';
-
-interface Props {
-  onSubmit: (
-    date: string,
-    distance: number,
-  ) => void;
-
-  editingTraining: Training | null;
-}
+type Props = {
+  formData: FormData;
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
+  onSubmit: () => void;
+};
 
 export default function TrainingForm({
+  formData,
+  setFormData,
   onSubmit,
-  editingTraining,
 }: Props) {
-  const [date, setDate] = useState('');
-  const [distance, setDistance] = useState('');
-
-  useEffect(() => {
-    if (editingTraining) {
-      setDate(editingTraining.date);
-      setDistance(
-        editingTraining.distance.toString(),
-      );
-    }
-  }, [editingTraining]);
-
-  const handleSubmit = (
-    e: React.FormEvent<HTMLFormElement>,
-  ) => {
-    e.preventDefault();
-
-    if (!date || !distance) {
-      return;
-    }
-
-    onSubmit(date, Number(distance));
-
-    setDate('');
-    setDistance('');
-  };
+  const handleChange =
+    (field: keyof FormData) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: e.target.value,
+      }));
+    };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="form"
-    >
-      <div>
-        <label>Дата (ДД.ММ.ГГ)</label>
-
+    <div className="form">
+      <div className="field">
+        <label>Дата</label>
         <input
-          value={date}
-          onChange={(e) =>
-            setDate(e.target.value)
-          }
+          type="date"
+          value={formData.date}
+          onChange={handleChange('date')}
         />
       </div>
 
-      <div>
-        <label>Пройдено км</label>
-
+      <div className="field">
+        <label>Дистанция (км)</label>
         <input
           type="number"
+          min="0"
           step="0.1"
-          value={distance}
-          onChange={(e) =>
-            setDistance(e.target.value)
-          }
+          value={formData.distance}
+          onChange={handleChange('distance')}
         />
       </div>
 
-      <button type="submit">
-        {editingTraining
-          ? 'Сохранить'
-          : 'OK'}
+      <button className="btn" onClick={onSubmit}>
+        Сохранить
       </button>
-    </form>
+    </div>
   );
 }

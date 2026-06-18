@@ -1,109 +1,130 @@
 import { useState } from 'react';
-import './App.css';
-
 import TrainingForm from './components/TrainingForm';
 import TrainingList from './components/TrainingList';
+import type { FormData, Training } from './components/TrainingList';
 
-import type { Training } from './components/TrainingList';
+import './App.css';
 
-function App() {
-  const [trainings, setTrainings] = useState<Training[]>([]);
-  const [editingTraining, setEditingTraining] =
-    useState<Training | null>(null);
+const formatDate = (date: string) => {
+  const [year, month, day] = date.split('-');
 
-  const parseDate = (date: string): Date => {
-    const [day, month, year] = date.split('.');
+  return `${day}.${month}.${year}`;
+};
 
-    return new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-    );
-  };
+const parseDate = (date: string) => {
+  const [day, month, year] = date.split('.');
 
-  const sortTrainings = (
-    items: Training[],
-  ): Training[] => {
-    return [...items].sort(
-      (a, b) =>
-        parseDate(b.date).getTime() -
-        parseDate(a.date).getTime(),
-    );
-  };
+  return new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day)
+  );
+};
 
-  const handleSubmit = (
-    date: string,
-    distance: number,
-  ) => {
-    if (editingTraining) {
-      const updated = trainings.map((item) =>
-        item.id === editingTraining.id
-          ? {
-              ...item,
-              date,
-              distance,
-            }
-          : item,
-      );
+const convertToInputDate = (date: string) => {
+  const [day, month, year] = date.split('.');
 
-      setTrainings(sortTrainings(updated));
-      setEditingTraining(null);
+  return `${year}-${month}-${day}`;
+};
 
+export default function App() {
+  const [formData, setFormData] =
+    useState<FormData>({
+      date: '',
+      distance: '',
+    });
+
+  const [trainings, setTrainings] =
+    useState<Training[]>([]);
+
+  const handleSubmit = () => {
+    if (!formData.date || !formData.distance) {
       return;
     }
 
-    const existing = trainings.find(
-      (item) => item.date === date,
+    const distance = Number(formData.distance);
+
+    if (distance <= 0 || Number.isNaN(distance)) {
+      alert('Введите корректное значение километража');
+       return;
+    }
+
+    const formattedDate = formatDate(
+      formData.date
     );
 
-    if (existing) {
-      const updated = trainings.map((item) =>
-        item.date === date
-          ? {
-              ...item,
-              distance: Number(
-                (
-                  item.distance + distance
-                ).toFixed(1),
-              ),
-            }
-          : item,
+    setTrainings((prev) => {
+      const existing = prev.find(
+        (item) => item.date === formattedDate
       );
 
-      setTrainings(sortTrainings(updated));
-    } else {
-      const updated = [
-        ...trainings,
-        {
-          id: crypto.randomUUID(),
-          date,
-          distance,
-        },
-      ];
+      let result: Training[];
 
-      setTrainings(sortTrainings(updated));
-    }
+      if (existing) {
+        result = prev.map((item) =>
+          item.date === formattedDate
+            ? {
+                ...item,
+                distance: (
+                  Number(item.distance) +
+                  Number(formData.distance)
+                ).toString(),
+              }
+            : item
+        );
+      } else {
+        result = [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            date: formattedDate,
+            distance: formData.distance,
+          },
+        ];
+      }
+
+      return result.sort(
+        (a, b) =>
+          parseDate(b.date).getTime() -
+          parseDate(a.date).getTime()
+      );
+    });
+
+    setFormData({
+      date: '',
+      distance: '',
+    });
   };
 
   const handleDelete = (id: string) => {
     setTrainings((prev) =>
-      prev.filter((item) => item.id !== id),
+      prev.filter((item) => item.id !== id)
     );
-
-    if (editingTraining?.id === id) {
-      setEditingTraining(null);
-    }
   };
 
-  const handleEdit = (training: Training) => {
-    setEditingTraining(training);
+  const handleEdit = (
+    training: Training
+  ) => {
+    setFormData({
+      date: convertToInputDate(
+        training.date
+      ),
+      distance: training.distance,
+    });
+
+    setTrainings((prev) =>
+      prev.filter(
+        (item) => item.id !== training.id
+      )
+    );
   };
 
   return (
     <div className="container">
       <TrainingForm
+        formData={formData}
+        setFormData={setFormData}
         onSubmit={handleSubmit}
-        editingTraining={editingTraining}
       />
 
       <TrainingList
@@ -114,5 +135,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

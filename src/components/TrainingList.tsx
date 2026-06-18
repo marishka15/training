@@ -1,16 +1,19 @@
-export interface Training {
+export type FormData = {
+  date: string;
+  distance: string;
+};
+
+export type Training = {
   id: string;
   date: string;
-  distance: number;
-}
+  distance: string;
+};
 
-interface Props {
+type Props = {
   trainings: Training[];
-
   onDelete: (id: string) => void;
-
   onEdit: (training: Training) => void;
-}
+};
 
 export default function TrainingList({
   trainings,
@@ -19,37 +22,30 @@ export default function TrainingList({
 }: Props) {
   return (
     <>
-      <div className="header">
+      <div className="list">
         <span>Дата (ДД.ММ.ГГ)</span>
         <span>Пройдено км</span>
         <span>Действия</span>
       </div>
 
       <div className="table">
-        {trainings.map((item) => (
-          <div
-            className="row"
-            key={item.id}
-          >
-            <span>{item.date}</span>
+        {trainings.map((training) => (
+          <div key={training.id} className="row">
+            <span>{training.date}</span>
 
-            <span>{item.distance}</span>
+            <span>{training.distance}</span>
 
             <span>
               <button
-                type="button"
-                onClick={() => onEdit(item)}
+                onClick={() => onEdit(training)}
               >
                 ✎
               </button>
 
               <button
-                type="button"
-                onClick={() =>
-                  onDelete(item.id)
-                }
+                onClick={() => onDelete(training.id)}
               >
-                ✘
+                ✖
               </button>
             </span>
           </div>
